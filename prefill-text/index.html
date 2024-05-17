@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prefilled textarea demo</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet">
+    <script async="true" src="https://cdn.tailwindcss.com">></script>
+
+    <style>
+        /* Create a fake textarea */
+        body {
+            -webkit-font-smothing: antialiased;
+            font-family: "Work sans", helvetica, arial, sans-serif;
+            text-wrap: pretty;
+        }
+
+        p + p,
+        h2 + p {
+            margin-top: 0.6em;
+        }
+
+        .textarea {
+            /* Why doesn't Tailwind come with min-h-** variants by default? */
+            min-height: 9em;
+        }
+
+        /* Make the editable section inline so it appears directly after the prefilled text */
+       span[contenteditable] {
+           /* Give it a fake insertion cursor; by default when the contenteditable element is empty you don't get one */
+            &:focus:empty:before {
+                content: " ";
+                display: block;
+                position: absolute;
+                width: 1px;
+                height: 1em;
+                background: black;
+                top: 50%;
+                left: 0.05em;
+                transform: translateY(-50%);
+                animation: blink 1s steps(2, start) infinite;
+            }
+           /* Add a placeholder */
+           &:empty::after {
+               content: "...";
+               opacity: 0.45;
+           }
+       }
+
+        @keyframes blink {
+            to {
+                visibility: hidden;
+            }
+        }
+
+        [data-context-menu] {
+            min-width: 250px;
+        }
+
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textarea = document.querySelectorAll(".textarea")[1];
+            const prefill = textarea.querySelector("#prefill");
+            const editor = textarea.querySelector("[contenteditable]");
+            const menu = document.querySelector("[data-context-menu]");
+            const pasteButton = document.querySelector("[data-action='paste']");
+            const selectButton = document.querySelector("[data-action='selectall']");
+            const label = document.querySelector("label[for='editable']");
+            const basicTextarea = document.querySelector("textarea");
+
+            // Focus the editable element when you click anywhere in the textarea
+
+            document.querySelectorAll(".textarea").forEach((el) => {
+                el.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    // Find the first editable element and focus it.
+                    el.querySelector("[contenteditable], textarea").focus();
+                });
+            });
+
+            if (
+                navigator.clipboard &&
+                navigator.permissions &&
+                navigator.permissions.query
+            ) {
+                // If we right-click in an area of the div that's not covered by an input element,
+                // we need to present an option to paste content.
+                textarea.addEventListener("contextmenu", (e) => {
+                    e.preventDefault();
+                    menu.style.left = `${e.clientX}px`;
+                    menu.style.top = `${e.clientY}px`;
+                    menu.classList.remove("hidden");
+                });
+                editor.addEventListener("contextmenu", (e) => {
+                    e.stopPropagation();
+                });
+                pasteButton.addEventListener("click", async (e) => {
+                    menu.classList.add("hidden");
+                    editor.focus();
+                    try {
+                        const permission = await navigator.permissions.query({
+                            name: "clipboard-read"
+                        });
+                        if (permission.state === "denied") {
+                            alert("Clipboard permission denied :(");
+                        } else {
+                            navigator.clipboard.readText().then((text) => {
+                                text = text.replace(/<[^>]*>?/gm, "");
+                                document.execCommand("insertHTML", false, text);
+                            });
+                        }
+                    } catch {
+                        alert("Clipboard permissions not supported in this browser");
+                    }
+                });
+
+                window.addEventListener("click", (e) => {
+                    if (!menu.classList.contains("hidden")) {
+                        if (!e.target.closest("[data-context-menu]")) {
+                            menu.classList.add("hidden");
+                        }
+                    }
+                });
+            }
+
+            selectButton.addEventListener("click", () => {
+                menu.classList.add("hidden");
+                editor.focus();
+                window.getSelection().selectAllChildren(editor);
+            });
+
+            // Force any test pasted to be plain text
+            editor.addEventListener("paste", (e) => {
+                e.preventDefault();
+                let text = (e.clipboardData || window.clipboardData).getData("text/plain");
+                // Get rid of any HTML tags present
+                text = text.replace(/<[^>]*>?/gm, "");
+                // insert text manually
+                document.execCommand("insertHTML", false, text);
+            });
+
+            const resizeTextarea = () => {
+                basicTextarea.style.height = "auto";
+                basicTextarea.style.height = basicTextarea.scrollHeight + "px";
+            };
+
+            basicTextarea.addEventListener("input", resizeTextarea);
+            resizeTextarea();
+
+            label.addEventListener("click", () => editor.focus());
+        });
+    </script>
+</head>
+<body>
+
+<div class="my-12 mx-auto flex flex-col gap-7 max-w-prose">
+
+    <h1 class="text-4xl font-light">Pre-filled non-editable text in a textarea</h1>
+    <p>We're exploring a couple of different approaches here. Both approaches use a <code class="p-1 rounded-sm bg-slate-200">&lt;div&gt;</code> disguised as a textarea which contains both the non-editable and editable text elements. Some tricksy CSS and Javascript is used to imitate the browser's default interaction behaviour.</p>
+
+    <div>
+        <h2 class="font-bold">Basic approach</h2>
+        <p class="text-sm">This still uses a <code class="p-1 rounded-sm bg-slate-200">&lt;textarea&gt;</code> for input, which means the browser treats it exactly as you'd expect, but it also means it and the prefill text <em>must</em> be block-level. Depending on the length of the pre-filled text, this may mean there's an awkward line break between the prefill and the input.</p>
+
+        <label id="basiclabel" for="basictextarea" class="inline-block mt-4 font-semibold text-sm">Petition text</label>
+        <div class="textarea mt-3 flex flex-col rounded-lg border-2 border-slate-200 leading-6 focus-within:border-blue-500  max-h-96 overflow-auto">
+            <p class="p-2 m-1 mb-0 bg-slate-100 rounded">This prefilled text must be included in the submission, and thus cannot be edited or removed</p>
+            <textarea id="basictextarea" class="bg-transparent p-2 pt-1 resize-none overflow-hidden outline-none w-full"></textarea>
+        </div>
+    </div>
+
+    <div>
+        <h2 class="font-bold">Fancier approach</h2>
+        <p class="text-sm">Instead of a <code class="p-1 rounded-sm bg-slate-200">&lt;textarea&gt;</code>, this uses a <code class="p-1 rounded-sm bg-slate-200">&lt;span&gt;</code> with the <code class="p-1 rounded-sm bg-slate-200">contenteditable</code> attribute set to allow text input.</p>
+        <p class="text-sm">Because it doesn't use proper form inputs, it requires a bit of extra work to make the user interaction look, work and feel like a form should. It also requires extra work to prevent people pasting in HTML code and breaking the site. But because the pre-fill and input are both inline, it flows a lot better.</p>
+        <p class="text-sm">Pasting can be tricky. Because the input element resizes itself to the precise amount of text inside of it, it's not always easy to right-click precisely on the element itself. This can be worked around by providing an in-UI right-click menu with a paste option, but this doesn't work in all browsers (works in Chrome and Edge but not Firefox).</p>
+
+        <label id="fancylabel" for="editable" class="inline-block mt-4 font-semibold text-sm">Petition text</label>
+        <div class="textarea mt-3 rounded-lg max-w-prose p-2 cursor-text leading-6 overflow-auto max-h-96 border-2 border-slate-200 focus-within:border-blue-500" aria-label="Petition text" aria-describedby="prefill">
+            <span id="prefill" class="p-1 mt-1 bg-slate-100 rounded box-decoration-clone">This prefilled text must be included in the submission, and thus cannot be edited or removed</span>
+            <span role="textbox" aria-multiline="true" aria-labelledby="fancylabel" contenteditable id="editable" class="relative focus:outline-none p-1 pr-0 empty:pr-5 box-decoration-clone whitespace-pre-line"></span>
+        </div>
+
+        <div data-context-menu class="hidden shadow-md border rounded-md bg-gray-50 p-2 absolute">
+            <ul>
+                <li><button class="w-full text-left p-3 cursor-default hover:bg-white hover:shadow rounded" data-action="selectall">Select all</button></li>
+                <li><button class="w-full text-left p-3 cursor-default hover:bg-white hover:shadow rounded" data-action="paste">Paste</button></li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
