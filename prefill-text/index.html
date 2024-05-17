@@ -161,7 +161,7 @@
     <p>We're exploring a couple of different approaches here. Both approaches use a <code class="p-1 rounded-sm bg-slate-200">&lt;div&gt;</code> disguised as a textarea which contains both the non-editable and editable text elements. Some tricksy CSS and Javascript is used to imitate the browser's default interaction behaviour.</p>
 
     <div>
-        <h2 class="font-bold">Basic approach</h2>
+        <h2 class="text-2xl my-4">Basic approach</h2>
         <p class="text-sm">This still uses a <code class="p-1 rounded-sm bg-slate-200">&lt;textarea&gt;</code> for input, which means the browser treats it exactly as you'd expect, but it also means it and the prefill text <em>must</em> be block-level. Depending on the length of the pre-filled text, this may mean there's an awkward line break between the prefill and the input.</p>
 
         <label id="basiclabel" for="basictextarea" class="inline-block mt-4 font-semibold text-sm">Petition text</label>
@@ -172,7 +172,7 @@
     </div>
 
     <div>
-        <h2 class="font-bold">Fancier approach</h2>
+        <h2 class="text-2xl my-4">Fancier approach</h2>
         <p class="text-sm">Instead of a <code class="p-1 rounded-sm bg-slate-200">&lt;textarea&gt;</code>, this uses a <code class="p-1 rounded-sm bg-slate-200">&lt;span&gt;</code> with the <code class="p-1 rounded-sm bg-slate-200">contenteditable</code> attribute set to allow text input.</p>
         <p class="text-sm">Because it doesn't use proper form inputs, it requires a bit of extra work to make the user interaction look, work and feel like a form should. It also requires extra work to prevent people pasting in HTML code and breaking the site. But because the pre-fill and input are both inline, it flows a lot better.</p>
         <p class="text-sm">Pasting can be tricky. Because the input element resizes itself to the precise amount of text inside of it, it's not always easy to right-click precisely on the element itself. This can be worked around by providing an in-UI right-click menu with a paste option, but this doesn't work in all browsers (works in Chrome and Edge but not Firefox).</p>
