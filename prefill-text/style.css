@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Create a fake textarea */
+body {
+    -webkit-font-smothing: antialiased;
+    font-family: "Work sans", helvetica, arial, sans-serif;
+    text-wrap: pretty;
+}
+
+p + p,
+h2 + p {
+    margin-top: 0.6em;
+}
+
+.textarea {
+    /* Why doesn't Tailwind come with min-h-** variants by default? */
+    min-height: 9em;
+}
+
+/* Make the editable section inline so it appears directly after the prefilled text */
+span[contenteditable] {
+    /* Give it a fake insertion cursor; by default when the contenteditable element is empty you don't get one */
+    &:focus:empty:before {
+        content: " ";
+        display: block;
+        position: absolute;
+        width: 1px;
+        height: 1em;
+        background: black;
+        top: 50%;
+        left: 0.05em;
+        transform: translateY(-50%);
+        animation: blink 1s steps(2, start) infinite;
+    }
+    /* Add a placeholder */
+    &:empty::after {
+        content: "...";
+        opacity: 0.45;
+    }
+}
+
+@keyframes blink {
+    to {
+        visibility: hidden;
+    }
+}
+
+[data-context-menu] {
+    min-width: 250px;
+}
